@@ -1,0 +1,274 @@
+Google Cloud Essentials
+lesson 1 - A Tour of Qwiklabs and the Google Cloud Platform
+
+Cloud Shell
+| gcloud auth list
+- list project ID
+| gcloud config list project
+- run touch command to create a file
+| touch test.txt
+| ls
+- to edit a file, type in nano followed by the filename you want to edit
+| nano test.txt
+- Another helpful command is cat, which will output the contents of a file
+| cat test.txt
+
+
+lesson 2 - Creating a Virtual Machine
+
+Create a new instance from the Cloud Console
+Install a NGINX web server
+- get root access using sudo
+| sudo su -
+- update your OS
+| apt-get update
+- Install NGINX
+| apt-get install nginx -y
+- Check that NGINX is running
+| ps auwx | grep nginx
+
+Create a new instance with gcloud
+- create a new virtual machine instance from the command line using gcloud, replacing [YOUR_ZONE] with one of the zone choices given earlier
+| gcloud compute instances create gcelab2 --machine-type n1-standard-2 --zone [your_zone]
+- you can SSH into your instance using gcloud
+| gcloud compute ssh gcelab2 --zone [YOUR_ZONE]
+
+
+lesson 3 - Getting Started with Cloud Shell & gcloud
+
+Understanding Regions and Zones
+- To see what your default region and zone settings
+| gcloud compute project-info describe --project <your_project_ID>
+- Make a couple of environment variables
+| export PROJECT_ID=<your_project_ID>
+- Set your ZONE environment variable
+| export ZONE=<your_zone>
+- verify the variables that are set
+| echo $PROJECT_ID
+| echo $ZONE
+
+Create a virtual machine with gcloud
+- create your vm
+| gcloud compute instances create gcelab2 --machine-type n1-standard-2 --zone $ZONE
+- see the default values
+| gcloud compute instances create --help
+
+Using gcloud commands
+- halp
+| gcloud -h
+| gcloud config --help
+| gcloud help config
+
+Auto-completion
+- Install the beta components
+| gcloud components install beta
+- Enter the gcloud interactive mode
+| gcloud beta interactive
+- idk what this is
+| gcloud compute instances describe <your_vm>
+
+SSH into your vm instance
+- SSH into your vm
+| gcloud compute ssh <your_vm> --zone $ZONE
+
+Use the Home directory
+| cd $HOME
+- Open your .bashrc configuration file using vi text editor
+| vi ./.bashrc
+
+
+lesson 4 - Kubernetes Engine - Qwik start
+
+Setting a default compute zone
+- must set for zone and region
+| gcloud config set compute/zone us-central1-a
+| gcloud config set compute/region us-central1
+
+Get authentication credentials for the cluster
+| gcloud container clusters create [CLUSTER-NAME]
+| gcloud container clusters get-credentials [CLUSTER-NAME]
+| kubectl create deployment hello-server --image=gcr.io/google-samples/hello-app:1.0
+create a Kubernetes Service
+--port specifies the port that the container exposes
+type="LoadBalancer" creates a Compute Engine load balancer for your container
+| kubectl expose deployment hello-server --type=LoadBalancer --port 8080
+Inspect the hello-server Service by running kubectl get
+| kubectl get service
+View the application from your web browser using the external IP address with the exposed port
+| http://[EXTERNAL-IP]:8080
+
+Clean Up
+delete cluster
+| gcloud container clusters delete [CLUSTER-NAME]
+
+
+lesson 5 - Set Up Network and HTTP Load Balancers
+
+Create multiple web server instances
+- set up the Nginx server upon startup
+| cat << EOF > startup.sh
+| #! /bin/bash
+| apt-get update
+| apt-get install -y nginx
+| service nginx start
+| sed -i -- 's/nginx/Google Cloud Platform - '"\$HOSTNAME"'/' /var/www/html/index.nginx-debian.html
+| EOF
+- Create an instance template, which uses the startup script
+| gcloud compute instance-templates create nginx-template \
+         --metadata-from-file startup-script=startup.sh
+- Create a target pool. A target pool allows a single access point to all the instances in a group and is necessary for load balancing in the future steps
+| gcloud compute target-pools create nginx-pool
+- Create a managed instance group using the instance template
+| gcloud compute instance-groups managed create nginx-group \
+         --base-instance-name nginx \
+         --size 2 \
+         --template nginx-template \
+         --target-pool nginx-pool
+- List the compute engine instances and you should see all of the instances created
+| gcloud compute instances list
+- Now configure a firewall so that you can connect to the machines on port 80 via the EXTERNAL_IP addresses
+| gcloud compute firewall-rules create www-firewall --allow tcp:80
+
+Create a Network Load Balancer
+- Create an L3 network load balancer targeting your instance group
+| gcloud compute forwarding-rules create nginx-lb \
+         --region us-central1 \
+         --ports=80 \
+         --target-pool nginx-pool
+- List all Google Compute Engine forwarding rules in your project
+| gcloud compute forwarding-rules list
+- You can then visit the load balancer from the browser http://IP_ADDRESS/
+
+Create a HTTP(s) Load Balancer
+- create a health check
+| gcloud compute http-health-checks create http-basic-check
+- Define an HTTP service and map a port name to the relevant port for the instance group. Now the load balancing service can forward traffic to the named port
+| gcloud compute instance-groups managed \
+       set-named-ports nginx-group \
+       --named-ports http:80
+- Create a backend service
+| gcloud compute backend-services create nginx-backend \
+      --protocol HTTP --http-health-checks http-basic-check --global
+- Add the instance group into the backend service
+| gcloud compute backend-services add-backend nginx-backend \
+    --instance-group nginx-group \
+    --instance-group-zone us-central1-a \
+    --global
+- Create a default URL map that directs all incoming requests to all your instances
+| gcloud compute url-maps create web-map \
+    --default-service nginx-backend
+- Create a target HTTP proxy to route requests to your URL map
+| gcloud compute target-http-proxies create http-lb-proxy \
+    --url-map web-map
+- Create a global forwarding rule to handle and route incoming requests
+| gcloud compute forwarding-rules create http-content-rule \
+        --global \
+        --target-http-proxy http-lb-proxy \
+        --ports 80
+- list the global forwarding rule
+| gcloud compute forwarding-rules list
+
+lesson 6 - Google Cloud Essentials: Challenge Lab
+
+task 1
+--must do manually on vm instances--
+gcloud compute instances create nucleus-jumphost --machine-type f1-micro --zone us-central1-c
+
+task 2
+gcloud config set compute/region us-east1
+gcloud config set compute/zone us-east1-b
+gcloud container clusters create nucleus-cluster1
+gcloud container clusters get-credentials nucleus-cluster1
+kubectl create deployment hello-server --image=gcr.io/google-samples/hello-app:2.0
+kubectl expose deployment hello-server --type=LoadBalancer --port 8080
+
+task 3
+cat << EOF > startup.sh
+#! /bin/bash
+apt-get update
+apt-get install -y nginx
+service nginx start
+sed -i -- 's/nginx/Google Cloud Platform - '"\$HOSTNAME"'/' /var/www/html/index.nginx-debian.html
+EOF
+gcloud compute instance-templates create nginx-template \
+         --metadata-from-file startup-script=startup.sh
+gcloud compute target-pools create nginx-pool
+gcloud compute instance-groups managed create nginx-group \
+         --base-instance-name nginx \
+         --size 2 \
+         --template nginx-template \
+         --target-pool nginx-pool
+gcloud compute firewall-rules create www-firewall --allow tcp:80
+gcloud compute http-health-checks create http-basic-check
+gcloud compute backend-services create nginx-backend \
+      --protocol HTTP --http-health-checks http-basic-check --global
+gcloud compute url-maps create web-map \
+    --default-service nginx-backend
+gcloud compute target-http-proxies create http-lb-proxy \
+    --url-map web-map
+gcloud compute forwarding-rules create http-content-rule \
+        --global \
+        --target-http-proxy http-lb-proxy \
+        --ports 80
+gcloud compute forwarding-rules list
+
+cat << EOF > startup.sh
+#! /bin/bash
+apt-get update
+apt-get install -y nginx
+service nginx start
+sed -i -- 's/nginx/Google Cloud Platform - '"\$HOSTNAME"'/' /var/www/html/index.nginx-debian.html
+EOF
+
+gcloud compute instance-templates create nginx-template \
+         --metadata-from-file startup-script=startup.sh
+
+gcloud compute target-pools create nginx-pool
+
+gcloud compute instance-groups managed create nginx-group \
+         --base-instance-name nginx \
+         --size 2 \
+         --template nginx-template \
+         --target-pool nginx-pool
+
+gcloud compute instances list
+
+gcloud compute firewall-rules create www-firewall --allow tcp:80
+
+Create a Network Load Balancer
+
+gcloud compute forwarding-rules create nginx-lb \
+         --region us-east1 \
+         --ports=80 \
+         --target-pool nginx-pool
+
+gcloud compute forwarding-rules list
+
+gcloud compute http-health-checks create http-basic-check
+
+gcloud compute instance-groups managed \
+       set-named-ports nginx-group \
+       --named-ports http:80
+
+gcloud compute backend-services create nginx-backend \
+      --protocol HTTP --http-health-checks http-basic-check --global
+
+gcloud compute backend-services add-backend nginx-backend \
+    --instance-group nginx-group \
+    --instance-group-zone us-east1-b \
+    --global
+
+gcloud compute url-maps create web-map \
+    --default-service nginx-backend
+
+gcloud compute target-http-proxies create http-lb-proxy \
+    --url-map web-map
+
+gcloud compute forwarding-rules create http-content-rule \
+        --global \
+        --target-http-proxy http-lb-proxy \
+        --ports 80
+
+gcloud compute forwarding-rules list
+
+http://<IP_ADDRESS>:8080
