@@ -6,4 +6,4 @@ This repo will be updated by time to time. References available as follows:
 
 Credit:
 [Frainmaster.]
-( https://github.com/frainmaster )
+(https://github.com/frainmaster)
