@@ -1,0 +1,203 @@
+Task 1
+=======
+source <(gsutil cat gs://cloud-training/gsp318/marking/setup_marking.sh)
+
+=
+gcloud source repos clone valkyrie-app --project=qwiklabs-gcp-01-43ea7c6ed734
+
+=
+cd valkyrie-app
+
+=
+cat > Dockerfile <<EOF
+FROM golang:1.10
+WORKDIR /go/src/app
+COPY source .
+RUN go install -v
+ENTRYPOINT ["app","-single=true","-port=8080"]
+EOF
+
+=
+docker build -t valkyrie-app:v0.0.1 .
+
+=
+docker images
+
+=
+cd ..
+
+=
+./step1.sh
+
+Task 2:
+=======
+docker run -p 8080:8080 valkyrie-app:v0.0.1 &
+
+=
+Preview on port 8080
+
+=
+./step2.sh
+
+Task3:
+======
+docker ps -a
+
+=
+docker stop CONTAINER_ID && docker rm CONTAINER_ID
+
+=
+docker ps -a
+
+=
+docker tag valkyrie-app:v0.0.1 gcr.io/qwiklabs-gcp-01-43ea7c6ed734/valkyrie-app:v0.0.1
+
+=
+docker images
+
+=
+gcloud docker -- push gcr.io/qwiklabs-gcp-01-43ea7c6ed734/valkyrie-app:v0.0.1
+
+Task 4
+======
+gcloud container clusters get-credentials valkyrie-dev --zone us-east1-d --project qwiklabs-gcp-01-43ea7c6ed734
+
+=
+cd valkyrie-app
+
+=
+vi k8s/deployment.yaml
+
+paste gcr.io/qwiklabs-gcp-01-43ea7c6ed734/valkyrie-app:v0.0.1 at image:
+
+=
+kubectl create -f k8s/
+
+=
+kubectl get deployments
+
+=
+kubectl get pods
+
+=
+kubectl get services
+
+=
+curl http://VALKYRIE-DEV_EXTERNAL-IP
+
+Task 5
+======
+kubectl scale deployment valkyrie-dev --replicas=3
+
+=
+kubectl get deployments
+
+=
+kubectl get pods
+
+=
+git merge origin/kurt-dev
+
+=
+ls
+
+=
+docker build -t valkyrie-app:v0.0.2 .
+
+=
+docker tag valkyrie-app:v0.0.2 gcr.io/qwiklabs-gcp-01-43ea7c6ed734/valkyrie-app:v0.0.2
+
+=
+gcloud docker -- push gcr.io/qwiklabs-gcp-01-43ea7c6ed734/valkyrie-app:v0.0.2
+
+=
+kubectl edit deployment valkyrie-dev
+
+change to gcr.io/qwiklabs-gcp-01-43ea7c6ed734/valkyrie-app:v0.0.2 at image:
+
+=
+kubectl rollout history deployment/valkyrie-dev
+
+Task 6
+======
+docker ps -a
+
+=
+export POD_NAME=$(kubectl get pods --namespace default -l "app.kubernetes.io/component=jenkins-master" -l "app.kubernetes.io/instance=cd" -o jsonpath="{.items[0].metadata.name}")
+
+=
+kubectl port-forward $POD_NAME 8080:8080 >> /dev/null &
+
+=
+printf $(kubectl get secret cd-jenkins -o jsonpath="{.data.jenkins-admin-password}" | base64 --decode);echo
+
+=
+click on the Web Preview button in cloud shell, then click “Preview on port 8080”
+
+=in Jenkins
+Click Credentials
+
+Click (global)
+
+Click adding some credentials?
+
+Change Kind to Google Service Account from Metadata
+
+Click OK
+
+Click top left Jenkins logo
+
+Click New Item
+
+Enter item name: valkyrie-app
+
+Click OK
+
+Change Pipeline Definition to Pipeline script from SCM
+
+Change SCM to Git
+
+Change Repository URL to link provided after cli; gcloud source repos list
+
+Change Credentials to PROJECT_ID
+
+Click Apply & Save
+
+=
+vi source/html.go
+
+change <div class="card orange">
+
+=
+vi Jenkinsfile 
+
+change PROJECT to PROJECT_ID
+
+=
+git status
+
+=
+git add .
+
+=
+git config --global user.email "EMAIL"
+
+=
+git config --global user.name "EMAIL_INITIAL"
+
+=
+git commit -m "build pipeline init"
+
+=
+git push 
+
+=in Jenkins
+Click Build Now
+
+Click #1 Icon
+
+Wait until Console Output turn Blue
+
+Click valkyrie-app on top left to verify
+
+
