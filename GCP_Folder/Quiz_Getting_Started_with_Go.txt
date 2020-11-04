@@ -1,0 +1,14 @@
+Quiz: Getting Started with Go
+
+Answer only (Not in sequence):
+
+- The “main” package.
+- App Engine can scale up and down as workloads fluctuate.
+- HTTP and Background functions.
+- Implements Go interfaces.
+- Use the same Go app source code for each platform.
+- All platforms mentioned
+- Zero server management, no up-front provisioning, auto-scaling, and paying only for the resources used.
+- You use different code to retrieve data from each data platform.
+- Use the testing and httptest packages from the standard library.
+- A compiled language does not require a runtime like Node, Python, or JDK to execute.
