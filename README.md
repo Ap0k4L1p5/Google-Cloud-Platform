@@ -11,3 +11,5 @@ This repo will be updated by time to time. References available as follows:
 7. [Perform Foundational Data, ML, and AI Tasks in Google Cloud](https://github.com/Ap0k4L1p5/Google-Cloud-Platform/blob/master/GCP_Folder/Perform_Foundational_Data_ML_and_AI_Tasks_in_Google_Cloud.txt)
 8. [Quiz Getting Started with Go](https://github.com/Ap0k4L1p5/Google-Cloud-Platform/blob/master/GCP_Folder/Quiz_Getting_Started_with_Go.txt)
 
+Credit:
+[Frainmaster.](https://github.com/frainmaster)
