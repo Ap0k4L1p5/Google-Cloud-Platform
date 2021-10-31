@@ -10,6 +10,7 @@ This repo will be updated by time to time. References available as follows:
 6. [Build a Website on Google Cloud](https://github.com/Ap0k4L1p5/Google-Cloud-Platform/blob/master/GCP_Folder/Build_a_Website_on_Google_Cloud.txt)
 7. [Perform Foundational Data, ML, and AI Tasks in Google Cloud](https://github.com/Ap0k4L1p5/Google-Cloud-Platform/blob/master/GCP_Folder/Perform_Foundational_Data_ML_and_AI_Tasks_in_Google_Cloud.txt)
 8. [Quiz Getting Started with Go](https://github.com/Ap0k4L1p5/Google-Cloud-Platform/blob/master/GCP_Folder/Quiz_Getting_Started_with_Go.txt)
+9. [Insights from Data with BigQuery: Challenge Lab](https://github.com/Ap0k4L1p5/Google-Cloud-Platform/blob/master/GCP_Folder/Insights_from_Data_with_BigQuery:_Challenge_Lab.txt)
 
 Credit:
 [Frainmaster.](https://github.com/frainmaster)
